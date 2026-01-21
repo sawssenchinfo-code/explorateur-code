@@ -1,0 +1,278 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import ChatbotLogi from "@/components/ChatbotLogi";
+
+
+interface PageProps {
+  params: Promise<{
+    rubrique: string;
+    niveau: string;
+  }>;
+}
+
+const baseDeDonnees = {
+  simple: {
+    "1": {
+      titre: "L'alarme de LOGI",
+      contexte: "Il est 7h du matin.",
+      code: "Si (heure == 7) Alors\n  Sonner()\nFinSi",
+      question: "L'alarme sonne-t-elle ?",
+      options: ["Oui", "Non"],
+      correcte: "Oui",
+    },
+    "2": {
+      titre: "Le capteur de lumière",
+      contexte: "La luminosité est à 10%.",
+      code: "Si (lumiere < 20) Alors\n  Allumer_Lampe()\nFinSi",
+      question: "La lampe s'allume-t-elle ?",
+      options: ["Oui", "Non"],
+      correcte: "Oui",
+    },
+    "3": {
+      titre: "Accès VIP",
+      contexte: "Tu as 50 points.",
+      code: "Si (points >= 100) Alors\n  Ouvrir_Porte_VIP()\nFinSi",
+      question: "La porte VIP s'ouvre-t-elle ?",
+      options: ["Oui", "Non"],
+      correcte: "Non",
+    },
+    "4": {
+      type: "algorithme",
+      titre: "Mission : Arrosage Automatique",
+      consigne:
+        "Écris un algorithme 'arrosage' qui permet de saisir la valeur de l'humidité H et d'afficher 'arroser' si H < 30.",
+      solution:
+        "algorithme arrosage\ndébut\nécrire('donner la valeur de l'humidité:')\nlire(H)\nsi (H < 30) alors\nécrire('arroser')\nfin si\nfin",
+    },
+    "5": {
+      type: "python",
+      titre: "Traduction : Jardinier Python",
+      consigne: "Traduis l'algorithme précédent en Python.",
+      solution: "H=int(input('donner la valeur de l'humidité:'))\nif H < 30:\n    print('arroser')",
+    },
+  },
+  complete: {
+    "1": { titre: "Le mot de passe", contexte: "Tu as saisi '1234'.", code: "Si (mdp == '0000') Alors\n  Acces_Ok()\nSinon\n  Refuse()\nFinSi", question: "Quel est le résultat ?", options: ["Acces_Ok()", "Refuse()"], correcte: "Refuse()" },
+    "2": { titre: "Le Parapluie", contexte: "Il pleut.", code: "Si (meteo == 'pluie') Alors\n  Prendre_Parapluie()\nSinon\n  Prendre_Lunettes()\nFinSi", question: "Que prend l'explorateur ?", options: ["Parapluie", "Lunettes"], correcte: "Parapluie" },
+    "3": { titre: "Majorité", contexte: "L'âge est 16 ans.", code: "Si (age >= 18) Alors\n  Majeur()\nSinon\n  Mineur()\nFinSi", question: "Résultat ?", options: ["Majeur()", "Mineur()"], correcte: "Mineur()" },
+    "4": { type: "algorithme", titre: "Mission : Pair ou Impair", consigne: "Écris un algorithme 'parité' qui permet de saisir un nombre entier N et d'afficher si N est pair ou impair.", solution: "algorithme parité\ndébut\nécrire('donner un nombre N:')\nlire(N)\nsi (N mod 2 = 0) alors\nécrire('pair')\nsinon\nécrire('impair')\nfin si\nfin" },
+    "5": { type: "python", titre: "Traduction : Pair ou Impair Python", consigne: "Code l'algorithme précédent en Python.", solution: "N=int(input('donner un nombre N:'))\nif N%2==0:\n    print('pair')\nelse:\n    print('impair')" }
+  },
+  generalisee: {
+    "1": { titre: "Le Feu de signalisation", contexte: "Le feu est Orange.", code: "Si (feu == 'Vert') Alors\n  Passer()\nSinon Si (feu == 'Orange') Alors\n  Ralentir()\nSinon\n  Arreter()\nFinSi", question: "Que fait la voiture ?", options: ["Passer()", "Ralentir()", "Arreter()"], correcte: "Ralentir()" },
+    "2": { titre: "Le Thermostat", contexte: "Il fait 25°C.", code: "Si (temp < 18) Alors\n  Chauffer()\nSinon Si (temp > 24) Alors\n  Climatiser()\nSinon\n  Rien()\nFinSi", question: "Action du thermostat ?", options: ["Chauffer()", "Climatiser()", "Rien()"], correcte: "Climatiser()" },
+    "3": { titre: "La Mention", contexte: "La moyenne est 11.", code: "Si (moy < 10) Alors\n  Refaire()\nSinon Si (moy < 12) Alors\n  Passable()\nSinon\n  Bien()\nFinSi", question: "Quelle est la mention ?", options: ["Refaire()", "Passable()", "Bien()"], correcte: "Passable()" },
+    "4": { type: "algorithme", titre: "Mission : État de l'Eau", consigne: "Écris un algorithme 'etat' qui permet de saisir la température T et d'afficher 'glace', 'liquide' ou 'vapeur'.", solution: "algorithme etat\ndébut\nécrire('donner la température de l'eau:')\nlire(T)\nsi (T < 0) alors\nécrire('glace')\nsinon si (T < 100) alors\nécrire('liquide')\nsinon\nécrire('vapeur')\nfin si\nfin" },
+    "5": { type: "python", titre: "Traduction : Thermomètre Python", consigne: "Implémente l'état de l'eau en Python (utilise elif).", solution: "T=int(input('donner la température de l'eau:'))\nif T < 0:\n    print('glace')\nelif T < 100:\n    print('liquide')\nelse:\n    print('vapeur')" }
+  }
+};
+
+const nettoyer = (str: string) =>
+  str.toLowerCase().replace(/\s+/g, "").replace(/écrire\s*\(.*?\)/g, "").replace(/print\s*\(.*?\)/g, "");
+
+const playSound = (type: "success" | "error") => {
+  const audio = new Audio(type === "success" ? "/success.mp3" : "/error.mp3");
+  audio.volume = 0.4;
+  audio.play();
+};
+
+export default function JeuPage() {
+  const params = useParams();
+  const router = useRouter();
+  const [choixEleve, setChoixEleve] = useState<string | null>(null);
+  const [userCode, setUserCode] = useState("");
+  const [feedback, setFeedback] = useState<"bravo" | "erreur" | null>(null);
+  const [score, setScore] = useState(0);
+  const [temps, setTemps] = useState(0);
+  const [showFelicitations, setShowFelicitations] = useState(false);
+  
+  const rubrique = String(params.rubrique);
+  const niveau = String(params.niveau);
+  const defi = baseDeDonnees[rubrique]?.[niveau];
+
+  const [nomEleve, setNomEleve] = useState("Explorateur");
+
+  useEffect(() => {
+  const s = localStorage.getItem("score_explorateur");
+  if (s) setScore(parseInt(s));
+
+  const n = localStorage.getItem("nom_explorateur");
+  if (n) setNomEleve(n);
+
+  const t = setInterval(() => setTemps((x) => x + 1), 1000);
+  return () => clearInterval(t);
+}, []);
+
+  if (!defi) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">Défi introuvable</div>;
+  }
+
+  const verifierQCM = (rep: string) => {
+  setChoixEleve(rep);
+
+  if (rep === defi.correcte) {
+    playSound("success");
+    setFeedback("bravo");
+
+    const ns = score + 10;
+    setScore(ns);
+    localStorage.setItem("score_explorateur", ns.toString());
+
+    // ⚡ Si c'est la dernière question de généralisee, on redirige directement
+    if (rubrique === "generalisee" && parseInt(niveau) === 5) {
+      router.push("/felicitations");
+      return;
+    }
+  } else {
+    playSound("error");
+    setFeedback("erreur");
+
+    const ns = Math.max(0, score - 5);
+    setScore(ns);
+    localStorage.setItem("score_explorateur", ns.toString());
+  }
+};
+
+
+  const verifierCode = () => {
+  if (nettoyer(userCode) === nettoyer(defi.solution) && userCode.trim() !== "") {
+    playSound("success");
+    setFeedback("bravo");
+
+    const ns = score + 10;
+    setScore(ns);
+    localStorage.setItem("score_explorateur", ns.toString());
+
+    if (rubrique === "generalisee" && parseInt(niveau) === 5) {
+      router.push("/felicitations");
+      return;
+    }
+  } else {
+    playSound("error");
+    setFeedback("erreur");
+
+    const ns = Math.max(0, score - 5);
+    setScore(ns);
+    localStorage.setItem("score_explorateur", ns.toString());
+  }
+};
+
+
+  const suivant = () => {
+    const n = parseInt(niveau);
+    if (rubrique === "generalisee" && n === 5) {
+      // dernière question généralisée → affiche félicitations directement
+      setShowFelicitations(true);
+      return;
+    }
+    if (n < 5) {
+      router.push(`/jeu/${rubrique}/${n + 1}`);
+    } else {
+      router.push("/selection");
+    }
+    setFeedback(null);
+    setChoixEleve(null);
+    setUserCode("");
+  };
+
+  const progress = (parseInt(niveau) / 5) * 100;
+  const titreExploration = {
+    simple: "Structures conditionnelles simples",
+    complete: "Structures conditionnelles complètes",
+    generalisee: "Structures conditionnelles généralisées",
+  }[rubrique];
+
+  return (
+    <main className="min-h-screen bg-[#0f172a] text-white p-6">
+      {showFelicitations ? (
+        <FelicitationsPage />
+      ) : (
+        <>
+          <div className="max-w-4xl mx-auto mb-6 text-center">
+            <h1 className="text-xl md:text-2xl font-black text-cyan-400 uppercase tracking-widest">
+              Exploration : {titreExploration}
+            </h1>
+          </div>
+
+          {/* HUD */}
+          <div className="max-w-4xl mx-auto flex justify-between mb-4">
+            <span>⏱ {temps}s</span>
+            <span>🏆 Score : {score}</span>
+          </div>
+
+          {/* Progression */}
+          <div className="max-w-4xl mx-auto mb-6">
+            <div className="h-2 bg-slate-700 rounded">
+              <div className="h-2 bg-cyan-500 rounded" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+
+          {/* Mission */}
+          <div className="max-w-3xl mx-auto bg-slate-900 p-8 rounded-2xl shadow-xl">
+            <h1 className="text-2xl font-black mb-2">{defi.titre}</h1>
+            <p className="italic text-slate-300 mb-4">{defi.contexte || defi.consigne}</p>
+
+            {defi.code && (
+              <pre className="bg-black/40 p-4 rounded mb-4 text-cyan-300">{defi.code}</pre>
+            )}
+
+            {defi.options ? (
+              <>
+                <p className="mb-4 font-bold">{defi.question}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {defi.options.map((o: string) => {
+                    const isCorrect = o === defi.correcte;
+                    const isSelected = o === choixEleve;
+                    let classes = "p-4 rounded-xl font-bold transition-all border";
+                    if (feedback === "bravo" && isCorrect) classes += " bg-green-600 border-green-400 scale-105";
+                    else if (feedback === "erreur" && isSelected) classes += " bg-red-600 border-red-400";
+                    else classes += " bg-slate-800 hover:bg-cyan-600 border-white/10";
+                    return (
+                      <button key={o} onClick={() => verifierQCM(o)} className={classes}>
+                        {o}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <>
+                <textarea
+                  className="w-full h-40 bg-black/40 p-4 rounded font-mono"
+                  value={userCode}
+                  onChange={(e) => setUserCode(e.target.value)}
+                  placeholder="Écris ton code ici..."
+                />
+                <button onClick={verifierCode} className="mt-4 w-full bg-indigo-600 py-3 rounded-xl font-black">
+                  Vérifier
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Popup Bravo */}
+          {feedback === "bravo" && !(rubrique === "generalisee" && niveau === "5") && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+              <div className="bg-slate-800 p-10 rounded-3xl text-center border border-green-500">
+                <h2 className="text-3xl font-black text-green-400 mb-4">🎉 Bravo !</h2>
+                <p className="text-slate-300 mb-6">
+                  {rubrique === "simple" && niveau === "5"
+                    ? `${nomEleve}, tu as terminé le premier défi des structures conditionnelles simples.`
+                    : `Bonne réponse, ${nomEleve} !`}
+                </p>
+                <button onClick={suivant} className="bg-green-600 hover:bg-green-500 px-8 py-4 rounded-xl font-black uppercase">
+                  {rubrique === "simple" && niveau === "5" ? "Retour à la sélection" : "Étape suivante →"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Chatbot */}
+          <ChatbotLogi rubrique={rubrique} niveau={niveau} defiEnCours={defi} userAnswer={userCode} nomEleve={nomEleve} />
+        </>
+      )}
+    </main>
+  );
+}
