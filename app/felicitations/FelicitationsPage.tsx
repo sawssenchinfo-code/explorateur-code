@@ -2,7 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import confetti from 'canvas-confetti';
+let confetti: any;
+//if (typeof window !== "undefined") {
+  // Import dynamique uniquement dans le navigateur
+  confetti = require("canvas-confetti");
+//}
 
 export default function FelicitationsPage() {
   const router = useRouter();
@@ -10,17 +14,19 @@ export default function FelicitationsPage() {
   const [scoreTotal, setScoreTotal] = useState(0);
 
   useEffect(() => {
-    setNom(localStorage.getItem('nom_explorateur') || "Explorateur");
-    setScoreTotal(parseInt(localStorage.getItem('score_explorateur') || "0"));
-    
-    // Lancement automatique des confettis à l'arrivée
+  const lancerConfetti = async () => {
+    const confettiModule = await import("canvas-confetti");
+    const confetti = confettiModule.default;
+
     confetti({
       particleCount: 150,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#06b6d4', '#3b82f6', '#eab308']
     });
-  }, []);
+  };
+
+  lancerConfetti();
+}, []);
 
   return (
     <div className="min-h-screen bg-[#0f172a] text-white flex flex-col items-center justify-center p-6 overflow-hidden">

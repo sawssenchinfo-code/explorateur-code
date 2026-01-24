@@ -43,7 +43,7 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
       );
       setSent(true);
       // fermer le modal après 1s
-      setTimeout(() => onClose(), 1000);
+      setTimeout(() => onClose?.(), 1000);
     } catch (error:any) {
       console.error("EMAILJS ERROR 👉", error);
       alert(error?.text || "Erreur EmailJS");

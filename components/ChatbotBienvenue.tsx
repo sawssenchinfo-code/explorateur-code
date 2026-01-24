@@ -3,10 +3,16 @@
 import { useEffect, useState } from "react";
 import Image from "next/image"; // pour afficher l'image du chatbot
 
-export default function ChatbotBienvenue() {
+interface ChatbotBienvenueProps {
+  context: string; // 🔹 Déclare context comme string
+}
+
+export default function ChatbotBienvenue({ context }: ChatbotBienvenueProps) {
+  // Tu peux utiliser context si besoin, par ex. changer le message selon la page
   const fullMessage =
-    "👋 Salut Explorateur ! Bienvenue dans le Serious Game L'Explorateur de Code. " +
-                  "Avant de commencer, insère ton nom et le code que tu as reçu dans la carte finale de la boîte à logique.";
+    context === "accueil"
+      ? "👋 Salut Explorateur ! Bienvenue dans le Serious Game L'Explorateur de Code. Avant de commencer, insère ton nom et le code que tu as reçu dans la carte finale de la boîte à logique."
+      : "💡 Tu es maintenant dans le jeu, bon courage !";
 
   const [displayedMessage, setDisplayedMessage] = useState("");
   const [index, setIndex] = useState(0);
@@ -19,7 +25,7 @@ export default function ChatbotBienvenue() {
       }, 30); // vitesse de frappe (30ms par caractère)
       return () => clearTimeout(timer);
     }
-  }, [index]);
+  }, [index, fullMessage]);
 
   return (
     <div
@@ -45,12 +51,12 @@ export default function ChatbotBienvenue() {
       {/* Image du chatbot */}
       <div style={{ flexShrink: 0 }}>
         <Image
-          src="/logi.png" // Remplace par le chemin de ton image
-          alt="Chatbot LOGI"
-          width={50}
-          height={50}
-          style={{ borderRadius: "50%" }}
-        />
+  src="/logi.png" // ✅ correct si placé dans public
+  alt="Chatbot LOGI"
+  width={50}
+  height={50}
+  style={{ borderRadius: "50%" }}
+/>
       </div>
 
       {/* Texte animé */}

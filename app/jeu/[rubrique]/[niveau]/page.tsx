@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import ChatbotLogi from "@/components/ChatbotLogi";
-
+import FelicitationsPage from "@/app/felicitations/FelicitationsPage";
 
 interface PageProps {
   params: Promise<{
@@ -68,6 +68,8 @@ const baseDeDonnees = {
     "5": { type: "python", titre: "Traduction : Thermomètre Python", consigne: "Implémente l'état de l'eau en Python (utilise elif).", solution: "T=int(input('donner la température de l'eau:'))\nif T < 0:\n    print('glace')\nelif T < 100:\n    print('liquide')\nelse:\n    print('vapeur')" }
   }
 };
+type Rubrique = keyof typeof baseDeDonnees;
+type Niveau = keyof (typeof baseDeDonnees)[Rubrique];
 
 const nettoyer = (str: string) =>
   str.toLowerCase().replace(/\s+/g, "").replace(/écrire\s*\(.*?\)/g, "").replace(/print\s*\(.*?\)/g, "");
@@ -88,82 +90,84 @@ export default function JeuPage() {
   const [temps, setTemps] = useState(0);
   const [showFelicitations, setShowFelicitations] = useState(false);
   
-  const rubrique = String(params.rubrique);
-  const niveau = String(params.niveau);
+  const rubrique = params.rubrique as Rubrique;
+  const niveau = params.niveau as Niveau;
   const defi = baseDeDonnees[rubrique]?.[niveau];
 
   const [nomEleve, setNomEleve] = useState("Explorateur");
 
   useEffect(() => {
-  const s = localStorage.getItem("score_explorateur");
-  if (s) setScore(parseInt(s));
+    const s = localStorage.getItem("score_explorateur");
+    if (s) setScore(parseInt(s));
 
-  const n = localStorage.getItem("nom_explorateur");
-  if (n) setNomEleve(n);
+    const n = localStorage.getItem("nom_explorateur");
+    if (n) setNomEleve(n);
 
-  const t = setInterval(() => setTemps((x) => x + 1), 1000);
-  return () => clearInterval(t);
-}, []);
+    const t = setInterval(() => setTemps((x) => x + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   if (!defi) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Défi introuvable</div>;
+    return (
+      <div className="p-10 text-center text-white">
+        Défi introuvable ❌
+      </div>
+    );
   }
 
   const verifierQCM = (rep: string) => {
-  setChoixEleve(rep);
+    setChoixEleve(rep);
 
-  if (rep === defi.correcte) {
-    playSound("success");
-    setFeedback("bravo");
+    if ("correcte" in defi && rep === defi.correcte) {
+      playSound("success");
+      setFeedback("bravo");
 
-    const ns = score + 10;
-    setScore(ns);
-    localStorage.setItem("score_explorateur", ns.toString());
+      const ns = score + 10;
+      setScore(ns);
+      localStorage.setItem("score_explorateur", ns.toString());
 
-    // ⚡ Si c'est la dernière question de généralisee, on redirige directement
-    if (rubrique === "generalisee" && parseInt(niveau) === 5) {
-      router.push("/felicitations");
-      return;
+      if (rubrique === "generalisee" && parseInt(niveau) === 5) {
+        setShowFelicitations(true);
+        return;
+      }
+    } else {
+      playSound("error");
+      setFeedback("erreur");
+
+      const ns = Math.max(0, score - 5);
+      setScore(ns);
+      localStorage.setItem("score_explorateur", ns.toString());
     }
-  } else {
-    playSound("error");
-    setFeedback("erreur");
-
-    const ns = Math.max(0, score - 5);
-    setScore(ns);
-    localStorage.setItem("score_explorateur", ns.toString());
-  }
-};
-
+  };
 
   const verifierCode = () => {
-  if (nettoyer(userCode) === nettoyer(defi.solution) && userCode.trim() !== "") {
-    playSound("success");
-    setFeedback("bravo");
+    if (!("solution" in defi)) return;
 
-    const ns = score + 10;
-    setScore(ns);
-    localStorage.setItem("score_explorateur", ns.toString());
+    if (nettoyer(userCode) === nettoyer(defi.solution) && userCode.trim() !== "") {
+      playSound("success");
+      setFeedback("bravo");
 
-    if (rubrique === "generalisee" && parseInt(niveau) === 5) {
-      router.push("/felicitations");
-      return;
+      const ns = score + 10;
+      setScore(ns);
+      localStorage.setItem("score_explorateur", ns.toString());
+
+      if (rubrique === "generalisee" && parseInt(niveau) === 5) {
+        setShowFelicitations(true);
+        return;
+      }
+    } else {
+      playSound("error");
+      setFeedback("erreur");
+
+      const ns = Math.max(0, score - 5);
+      setScore(ns);
+      localStorage.setItem("score_explorateur", ns.toString());
     }
-  } else {
-    playSound("error");
-    setFeedback("erreur");
-
-    const ns = Math.max(0, score - 5);
-    setScore(ns);
-    localStorage.setItem("score_explorateur", ns.toString());
-  }
-};
-
+  };
 
   const suivant = () => {
     const n = parseInt(niveau);
     if (rubrique === "generalisee" && n === 5) {
-      // dernière question généralisée → affiche félicitations directement
       setShowFelicitations(true);
       return;
     }
@@ -184,6 +188,8 @@ export default function JeuPage() {
     generalisee: "Structures conditionnelles généralisées",
   }[rubrique];
 
+  const defiAny = defi as any; // 🔹 Cast pour supprimer toutes les erreurs TS
+
   return (
     <main className="min-h-screen bg-[#0f172a] text-white p-6">
       {showFelicitations ? (
@@ -196,34 +202,31 @@ export default function JeuPage() {
             </h1>
           </div>
 
-          {/* HUD */}
           <div className="max-w-4xl mx-auto flex justify-between mb-4">
             <span>⏱ {temps}s</span>
             <span>🏆 Score : {score}</span>
           </div>
 
-          {/* Progression */}
           <div className="max-w-4xl mx-auto mb-6">
             <div className="h-2 bg-slate-700 rounded">
               <div className="h-2 bg-cyan-500 rounded" style={{ width: `${progress}%` }} />
             </div>
           </div>
 
-          {/* Mission */}
           <div className="max-w-3xl mx-auto bg-slate-900 p-8 rounded-2xl shadow-xl">
-            <h1 className="text-2xl font-black mb-2">{defi.titre}</h1>
-            <p className="italic text-slate-300 mb-4">{defi.contexte || defi.consigne}</p>
+            <h1 className="text-2xl font-black mb-2">{defiAny.titre}</h1>
+            <p className="italic text-slate-300 mb-4">{defiAny.contexte || defiAny.consigne}</p>
 
-            {defi.code && (
-              <pre className="bg-black/40 p-4 rounded mb-4 text-cyan-300">{defi.code}</pre>
+            {defiAny.code && (
+              <pre className="bg-black/40 p-4 rounded mb-4 text-cyan-300">{defiAny.code}</pre>
             )}
 
-            {defi.options ? (
+            {defiAny.options ? (
               <>
-                <p className="mb-4 font-bold">{defi.question}</p>
+                <p className="mb-4 font-bold">{defiAny.question}</p>
                 <div className="grid grid-cols-2 gap-4">
-                  {defi.options.map((o: string) => {
-                    const isCorrect = o === defi.correcte;
+                  {defiAny.options.map((o: string) => {
+                    const isCorrect = "correcte" in defiAny && o === defiAny.correcte;
                     const isSelected = o === choixEleve;
                     let classes = "p-4 rounded-xl font-bold transition-all border";
                     if (feedback === "bravo" && isCorrect) classes += " bg-green-600 border-green-400 scale-105";
@@ -252,7 +255,6 @@ export default function JeuPage() {
             )}
           </div>
 
-          {/* Popup Bravo */}
           {feedback === "bravo" && !(rubrique === "generalisee" && niveau === "5") && (
             <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
               <div className="bg-slate-800 p-10 rounded-3xl text-center border border-green-500">
@@ -269,7 +271,6 @@ export default function JeuPage() {
             </div>
           )}
 
-          {/* Chatbot */}
           <ChatbotLogi rubrique={rubrique} niveau={niveau} defiEnCours={defi} userAnswer={userCode} nomEleve={nomEleve} />
         </>
       )}
