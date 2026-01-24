@@ -30,8 +30,8 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
 
     try {
       await emailjs.send(
-        "service_bch26yj",
-        "template_d5vtcw5",
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
         {
           from_name: nom,
           avis_jeu: form.avis_jeu,
@@ -39,7 +39,7 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
           note: String(form.note),
           commentaire: form.commentaire
         },
-        "Zvz_0_VehoIOgs4ju"
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
       );
       setSent(true);
       // fermer le modal après 1s
