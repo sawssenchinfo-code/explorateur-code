@@ -1,30 +1,33 @@
-import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1", // 👈 IMPORTANT : On redirige vers Groq
 });
 
 export async function POST(req: Request) {
   try {
-    const { systemMessage, userMessage } = await req.json();
+    const { userMessage,systemMessage } = await req.json(); // On ne prend que le message de l'utilisateur
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+   const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile", // 🚀 Un modèle gratuit, ultra rapide et très puissant
       messages: [
         { role: "system", content: systemMessage },
         { role: "user", content: userMessage },
       ],
-      temperature: 0.2,
-      max_tokens: 80,
+      max_tokens: 150,
+      temperature: 0.7,
     });
 
-    return NextResponse.json({
-      reply: completion.choices[0].message.content,
-    });
-  } catch (error) {
+   const reply = response.choices[0].message.content;
+
+    return NextResponse.json({ reply });
+    
+  } catch (error: any) {
+    console.error("Erreur Groq:", error);
     return NextResponse.json(
-      { reply: "Erreur de connexion avec LOGI." },
+      { reply: "Désolé, ma connexion avec la station spatiale LOGI a été coupée ! 🛰️" },
       { status: 500 }
     );
   }

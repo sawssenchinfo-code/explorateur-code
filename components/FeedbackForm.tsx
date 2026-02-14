@@ -57,7 +57,7 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
       <h2 className="text-xl font-bold text-cyan-400 mb-4">Donne ton avis sur le jeu</h2>
 
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-slate-300 font-bold">Qu'as-tu pensé du jeu ?</label>
+        <label className="text-sm text-slate-300 font-bold">Qu'as-tu pensé du jeu ? 🧠</label>
         <textarea
           value={form.avis_jeu}
           onChange={(e) => setForm({ ...form, avis_jeu: e.target.value })}
@@ -68,18 +68,18 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
       </div>
 
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-slate-300 font-bold">Comment as-tu trouvé la boite LOGI ?</label>
+        <label className="text-sm text-slate-300 font-bold">Comment as-tu trouvé la boite à logique ? 📦</label>
         <textarea
           value={form.avis_boite}
           onChange={(e) => setForm({ ...form, avis_boite: e.target.value })}
-          placeholder="Ton avis sur la boîte LOGI..."
+          placeholder="Ton avis sur la boîte à logique..."
           className="p-3 rounded-xl bg-slate-800 text-white outline-none"
         />
       </div>
 
       {/* Note sur 10 */}
       <div className="flex flex-col space-y-1">
-        <label className="text-sm font-bold text-slate-300">Note globale :</label>
+        <label className="text-sm font-bold text-slate-300">Note globale : ⭐</label>
         <div className="flex items-center justify-between mb-1">
           <span className="text-[12px] text-slate-400 font-bold">0</span>
           <span className="text-[14px] text-yellow-400 font-black">{form.note}/10</span>
@@ -97,7 +97,7 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
       </div>
 
       <div className="flex flex-col space-y-2">
-        <label className="text-sm font-bold text-slate-300">Commentaires supplémentaires :</label>
+        <label className="text-sm font-bold text-slate-300">Commentaires supplémentaires : 💬</label>
         <textarea
           value={form.commentaire}
           onChange={(e) => setForm({ ...form, commentaire: e.target.value })}
@@ -106,13 +106,25 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={loading || sent}
-        className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-all"
-      >
-        {loading ? "Envoi..." : sent ? "Envoyé ✅" : "Envoyer"}
-      </button>
+     <button
+  type="submit"
+  disabled={loading || sent}
+  className={`w-full py-3 font-black rounded-xl transition-all uppercase text-xs tracking-widest shadow-lg 
+    ${sent 
+      ? "bg-green-600 text-white cursor-default" 
+      : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white active:scale-95"
+    }`}
+>
+  {loading ? (
+    <span className="flex items-center justify-center gap-2">
+      <span className="animate-spin">🌀</span> Transmission...
+    </span>
+  ) : sent ? (
+    "Mission accomplie ! ✅"
+  ) : (
+    "Partager mon aventure 🚀"
+  )}
+</button>
     </form>
   );
 }

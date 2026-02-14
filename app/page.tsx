@@ -20,8 +20,15 @@ export default function Accueil() {
     }
 
     if (identifiant.toUpperCase() === "COND26") {
+      // --- LA CORRECTION EST ICI ---
+      // On efface TOUT l'ancien historique (scores et missions faites)
+      localStorage.clear(); 
+      
+      // Puis on enregistre les données du nouvel explorateur
       localStorage.setItem("nom_explorateur", nom);
       localStorage.setItem("score_explorateur", "0");
+      // -----------------------------
+
       router.push("/selection");
     } else {
       setErreur("Identifiant incorrect !!!");
@@ -55,10 +62,7 @@ export default function Accueil() {
             <input
               type="text"
               value={nom}
-              onChange={(e) => {
-                setNom(e.target.value);
-                localStorage.setItem("nom_explorateur", e.target.value);
-              }}
+              onChange={(e) => setNom(e.target.value)} // On ne set pas le localStorage ici, on attend le clic sur le bouton
               placeholder="Ex : Sawssen"
               className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-cyan-500 outline-none font-bold placeholder:text-slate-600"
             />
@@ -100,7 +104,6 @@ export default function Accueil() {
         Développé par <span className="text-cyan-400 font-bold">Sawssen CHTIOUI</span> • © 2026
       </div>
 
-      {/* Chatbot */}
       <ChatbotBienvenue context="accueil" />
     </main>
   );

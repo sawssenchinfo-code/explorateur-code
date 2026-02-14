@@ -11,7 +11,7 @@ interface Props {
   nomEleve?: string;
 
   mode?: "actif" | "passif";
-  messagePassif?: string;
+  messagePassif?: React.ReactNode;
 }
 
 export default function ChatbotLogi({
@@ -30,7 +30,8 @@ export default function ChatbotLogi({
   const [messages, setMessages] = useState<
     { from: "user" | "bot"; text: string }[]
   >([]);
-
+  const [usageCount, setUsageCount] = useState(0);
+  const MAX_QUESTIONS = 15; // 🛡️ Limite par élève
   const endRef = useRef<HTMLDivElement>(null);
   const greetedRef = useRef(false); // évite le double message
 
@@ -55,10 +56,18 @@ export default function ChatbotLogi({
   const envoyer = async () => {
     if (effectiveMode === "passif") return;
     if (!input.trim()) return;
-
+    // 🛡️ SÉCURITÉ : Vérification de la limite
+  if (usageCount >= MAX_QUESTIONS) {
+    setMessages((prev) => [
+      ...prev,
+      { from: "bot", text: "⚠️ Tu as posé beaucoup de questions ! Concentre-toi sur ton défi maintenant. 🚀" },
+    ]);
+    return;
+  }
     const question = input.trim();
     setInput("");
-
+    // On incrémente le compteur
+    setUsageCount(prev => prev + 1);
     setMessages((prev) => [
       ...prev,
       { from: "user", text: question },
@@ -121,85 +130,80 @@ Règles :
     }
   };
 
-  return (
+return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* 🟢 Icône LOGI */}
+      {/* 🟢 Icône LOGI (Mode Actif Fermé) */}
       {effectiveMode === "actif" && !open && (
         <button
           onClick={() => setOpen(true)}
-          className="hover:scale-110 transition"
+          className="hover:scale-110 transition drop-shadow-[0_0_10px_rgba(6,182,212,0.5)]"
         >
           <Image src="/logi.png" alt="LOGI" width={64} height={64} />
         </button>
       )}
 
-      {/* 🪟 Fenêtre */}
-      {(open || effectiveMode === "passif") && (
-        <div className="w-80 h-[420px] bg-[#0f172a] border border-cyan-500/30 rounded-2xl shadow-2xl flex flex-col">
+      {/* 💬 Mode PASSIF : Stable et à droite */}
+      {effectiveMode === "passif" && (
+        <div className="flex items-end gap-3 max-w-[300px] flex-row-reverse"> {/* flex-row-reverse pour mettre l'image à droite du texte */}
           
-          {/* Header */}
-          <div className="flex justify-between items-center px-4 py-2 border-b border-cyan-500/20">
-            <span className="text-cyan-400 font-bold">LOGI</span>
-            {effectiveMode === "actif" && (
-              <button
-                onClick={() => setOpen(false)}
-                className="text-red-400"
-              >
-                ✖
-              </button>
-            )}
+          {/* L'image de LOGI (Seule cette partie vibrera via le parent dans QuizFinal) */}
+          <div className="flex-shrink-0">
+            <Image 
+              src="/logi.png" 
+              alt="LOGI" 
+              width={48} 
+              height={48} 
+              className="drop-shadow-[0_0_8px_cyan]" 
+            />
           </div>
 
-          {/* Messages (SCROLL) */}
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-sm scrollbar-thin scrollbar-thumb-cyan-500/40">
-            {effectiveMode === "passif" ? (
-              <div className="flex gap-2 items-start">
-                <Image src="/logi.png" alt="LOGI" width={32} height={32} />
-                <div className="bg-cyan-500/10 text-cyan-200 px-3 py-2 rounded-2xl">
-                  {messagePassif}
+          {/* La Bulle : Stable, ne bouge jamais, texte clair */}
+          <div className="bg-[#0f172a]/95 border border-cyan-500/50 px-4 py-2 rounded-2xl rounded-br-none shadow-xl">
+             <p className="text-cyan-200 text-xs italic leading-relaxed">
+              {messagePassif}
+            </p>
+          </div>
+        </div>
+      )}
+      {/* 🪟 Mode ACTIF : Fenêtre de Chat complète */}
+      {effectiveMode === "actif" && open && (
+        <div className="w-80 h-[420px] bg-[#0f172a] border border-cyan-500/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="flex justify-between items-center px-4 py-3 border-b border-cyan-500/20 bg-cyan-500/5">
+            <div className="flex items-center gap-2">
+              <Image src="/logi.png" alt="LOGI" width={20} height={20} />
+              <span className="text-cyan-400 font-bold text-sm tracking-widest">LOGI</span>
+            </div>
+            <button onClick={() => setOpen(false)} className="text-red-400 hover:text-red-300 transition">✖</button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3 text-sm scrollbar-thin scrollbar-thumb-cyan-500/40">
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.from === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`px-4 py-2 rounded-2xl max-w-[85%] shadow-sm ${
+                    m.from === "user" ? "bg-cyan-600 text-white rounded-tr-none" : "bg-slate-800 text-cyan-300 rounded-tl-none"
+                  }`}>
+                  {m.text}
                 </div>
               </div>
-            ) : (
-              messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex ${
-                    m.from === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`px-3 py-2 rounded-2xl max-w-[85%] ${
-                      m.from === "user"
-                        ? "bg-cyan-600 text-white"
-                        : "bg-slate-800 text-cyan-300"
-                    }`}
-                  >
-                    {m.text}
-                  </div>
-                </div>
-              ))
-            )}
+            ))}
             <div ref={endRef} />
           </div>
 
           {/* Input */}
-          {effectiveMode === "actif" && (
-            <div className="flex gap-2 p-3 border-t border-cyan-500/20">
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && envoyer()}
-                placeholder="Pose ta question…"
-                className="flex-1 bg-black/40 text-white px-3 py-2 rounded-lg outline-none"
-              />
-              <button
-                onClick={envoyer}
-                className="bg-cyan-600 hover:bg-cyan-500 px-3 rounded-lg font-bold"
-              >
-                ➤
-              </button>
-            </div>
-          )}
+          <div className="flex gap-2 p-3 bg-black/20 border-t border-cyan-500/10">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && envoyer()}
+              placeholder="Pose ta question…"
+              className="flex-1 bg-slate-900 border border-cyan-500/20 text-white px-3 py-2 rounded-xl text-xs outline-none focus:border-cyan-500/50"
+            />
+            <button onClick={envoyer} className="bg-cyan-600 hover:bg-cyan-500 p-2 rounded-xl transition">
+              ➤
+            </button>
+          </div>
         </div>
       )}
     </div>

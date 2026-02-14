@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image"; // pour afficher l'image du chatbot
+import Image from "next/image";
 
 interface ChatbotBienvenueProps {
-  context: string; // 🔹 Déclare context comme string
+  context: string;
 }
 
 export default function ChatbotBienvenue({ context }: ChatbotBienvenueProps) {
-  // Tu peux utiliser context si besoin, par ex. changer le message selon la page
   const fullMessage =
     context === "accueil"
       ? "👋 Salut Explorateur ! Bienvenue dans le Serious Game L'Explorateur de Code. Avant de commencer, insère ton nom et le code que tu as reçu dans la carte finale de la boîte à logique."
@@ -16,13 +15,24 @@ export default function ChatbotBienvenue({ context }: ChatbotBienvenueProps) {
 
   const [displayedMessage, setDisplayedMessage] = useState("");
   const [index, setIndex] = useState(0);
+  
+  // 📱 Détecteur de mobile
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Vérifie la taille de l'écran au chargement et quand on redimensionne
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile(); // Test initial
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     if (index < fullMessage.length) {
       const timer = setTimeout(() => {
         setDisplayedMessage((prev) => prev + fullMessage[index]);
         setIndex(index + 1);
-      }, 30); // vitesse de frappe (30ms par caractère)
+      }, 30);
       return () => clearTimeout(timer);
     }
   }, [index, fullMessage]);
@@ -31,9 +41,16 @@ export default function ChatbotBienvenue({ context }: ChatbotBienvenueProps) {
     <div
       style={{
         position: "fixed",
-        bottom: "20px",
+        // --- LOGIQUE RESPONSIVE ---
+        // Si mobile (isMobile) : on le met en haut (top). Si PC : on reste en bas (bottom).
+        bottom: isMobile ? "auto" : "20px",
+        top: isMobile ? "20px" : "auto", 
         right: "20px",
-        width: "320px",
+        left: isMobile ? "20px" : "auto", // Prend plus de largeur sur mobile
+        width: isMobile ? "calc(100% - 40px)" : "320px",
+        maxWidth: "350px",
+        // ---------------------------
+        
         backgroundColor: "#0e172a",
         border: "1px solid #00ffff",
         borderRadius: "15px",
@@ -48,18 +65,16 @@ export default function ChatbotBienvenue({ context }: ChatbotBienvenueProps) {
         gap: "10px",
       }}
     >
-      {/* Image du chatbot */}
       <div style={{ flexShrink: 0 }}>
         <Image
-  src="/logi.png" // ✅ correct si placé dans public
-  alt="Chatbot LOGI"
-  width={50}
-  height={50}
-  style={{ borderRadius: "50%" }}
-/>
+          src="/logi.png"
+          alt="Chatbot LOGI"
+          width={50}
+          height={50}
+          style={{ borderRadius: "50%" }}
+        />
       </div>
 
-      {/* Texte animé */}
       <div>
         <strong>💬 LOGI ChatBot</strong>
         <p style={{ marginTop: "5px", lineHeight: 1.4 }}>{displayedMessage}</p>

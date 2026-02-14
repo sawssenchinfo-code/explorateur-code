@@ -37,6 +37,7 @@ export default function SelectionMission() {
   useEffect(() => {
     setNom(localStorage.getItem("nom_explorateur") || "Explorateur");
 
+    // Vérification des missions réussies
     const terminees: string[] = [];
     if (localStorage.getItem("mission_simple_faite") === "true") terminees.push("simple");
     if (localStorage.getItem("mission_complete_faite") === "true") terminees.push("complete");
