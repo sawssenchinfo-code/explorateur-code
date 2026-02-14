@@ -28,22 +28,23 @@ export default function FeedbackForm({ onClose }: FeedbackFormProps) {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      await emailjs.send(
-        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
-        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
-        {
-          from_name: nom,
-          avis_jeu: form.avis_jeu,
-          avis_boite: form.avis_boite,
-          note: String(form.note),
-          commentaire: form.commentaire
-        },
-        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
-      );
-      setSent(true);
-      // fermer le modal après 1s
-      setTimeout(() => onClose?.(), 1000);
+   try {
+  await emailjs.send(
+    process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+    // ⚠️ ICI : on change TEMPLATE_ID par FEEDBACK_TEMPLATE_ID
+    process.env.NEXT_PUBLIC_EMAILJS_FEEDBACK_TEMPLATE_ID!, 
+    {
+      from_name: nom,
+      avis_jeu: form.avis_jeu,
+      avis_boite: form.avis_boite,
+      note: String(form.note),
+      commentaire: form.commentaire
+    },
+    process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+  );
+  setSent(true);
+  setTimeout(() => onClose?.(), 2000); // On laisse 2s pour que l'élève voie le succès
+
     } catch (error:any) {
       console.error("EMAILJS ERROR 👉", error);
       alert(error?.text || "Erreur EmailJS");
