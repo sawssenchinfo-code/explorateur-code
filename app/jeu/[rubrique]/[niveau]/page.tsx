@@ -66,7 +66,7 @@ fin`,
     "1": { titre: "Le mot de passe", contexte: "Tu as saisi le mot de passe '1234'.", code: "Si (mdp == '0000') Alors\n  Acces_Ok()\nSinon\n  Refuse()\nFinSi", question: "Quel est le résultat ?", options: ["Acces_Ok()", "Refuse()"], correcte: "Refuse()" },
     "2": { titre: "Le Parapluie", contexte: "Il pleut.", code: "Si (meteo == 'pluie') Alors\n  Prendre_Parapluie()\nSinon\n  Prendre_Lunettes()\nFinSi", question: "Que prend l'explorateur ?", options: ["Parapluie", "Lunettes"], correcte: "Parapluie" },
     "3": { titre: "Majorité", contexte: "L'âge est 16 ans.", code: "Si (age >= 18) Alors\n  Majeur()\nSinon\n  Mineur()\nFinSi", question: "Résultat ?", options: ["Majeur()", "Mineur()"], correcte: "Mineur()" },
-    "4": { type: "algorithme", titre: "Mission : Pair ou Impair", consigne: "Écris un algorithme 'parité' qui permet de saisir un nombre entier N et d'afficher si N est pair ou impair.", solution: "algorithme parité\ndébut\nécrire('donner un nombre N:')\nlire(N)\nsi (N mod 2 = 0) alors\nécrire('pair')\nsinon\nécrire('impair')\nfin si\nfin" },
+    "4": { type: "algorithme", titre: "Mission : Pair ou Impair", consigne: "Écris un algorithme 'parité' qui permet de saisir un nombre entier N et d'afficher si N est pair ou impair.", solution: "algorithme parité\ndébut\nécrire('donner un nombre N:')\nlire(N)\nsi N mod 2 = 0 alors\nécrire('pair')\nsinon\nécrire('impair')\nfin si\nfin" },
     "5": { 
       type: "python", 
       titre: "Traduction : Pair ou Impair Python", 
@@ -115,9 +115,22 @@ fin`,
 type Rubrique = keyof typeof baseDeDonnees;
 type Niveau = keyof (typeof baseDeDonnees)[Rubrique];
 
-const nettoyer = (str: string) =>
-  str.toLowerCase().replace(/\s+/g, "").replace(/écrire\s*\(.*?\)/g, "").replace(/print\s*\(.*?\)/g, "");
-
+const nettoyer = (str: string) => {
+  return str
+    .toLowerCase()
+    // 1. Normalisation des caractères (accents)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    // 2. Harmonisation des guillemets et apostrophes
+    .replace(/['’]/g, '"')
+    // 3. VIDER le contenu de TOUTES les parenthèses de communication
+    // On cible : ecrire(...), print(...), lire(...), input(...)
+    .replace(/(ecrire|print|lire|input)\s*\((.*?)\)/g, "$1()")
+    // 4. Nettoyage des espaces et caractères spéciaux de fin
+    .replace(/\s+/g, "")
+    .replace(/;/g, "")
+    .trim();
+};
 const playSound = (type: "success" | "error") => {
   const audio = new Audio(type === "success" ? "/success.mp3" : "/error.mp3");
   audio.volume = 0.4;
