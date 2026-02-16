@@ -59,7 +59,7 @@ début
     écrire("arroser")
   fin si
 fin`,
-      solution: "H=int(input('donner la valeur de l\\'humidité:'))\nif H<30:\n    print('arroser')",
+      solution: "H=int(input('donner la valeur de l'humidité:'))\nif H<30:\nprint('arroser')",
     },
   },
   complete: {
@@ -82,7 +82,7 @@ début
     écrire('impair')
   fin si
 fin`, 
-      solution: "N=int(input('donner un nombre N:'))\nif N%2==0:\n    print('pair')\nelse:\n    print('impair')" 
+      solution: "N=int(input('donner un nombre N:'))\nif N%2==0:\nprint('pair')\nelse:\nprint('impair')" 
     }
   },
   generalisee: {
@@ -107,7 +107,7 @@ début
     écrire('vapeur')
   fin si
 fin`,
-      solution: "T=int(input('donner la température de l'eau:'))\nif T < 0:\n    print('glace')\nelif T < 100:\n    print('liquide')\nelse:\n    print('vapeur')" 
+      solution: "T=int(input('donner la température de l'eau:'))\nif T < 0:\nprint('glace')\nelif T < 100:\nprint('liquide')\nelse:\nprint('vapeur')" 
     }
   }
 };
