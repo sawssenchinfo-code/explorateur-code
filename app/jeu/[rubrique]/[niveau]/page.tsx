@@ -17,7 +17,7 @@ const baseDeDonnees = {
     "1": {
       titre: "L'alarme de LOGI",
       contexte: "Il est 7h du matin.",
-      code: "Si (heure == 7) Alors\n  Sonner()\nFinSi",
+      code: "Si (heure = 7) Alors\n  Sonner()\nFinSi",
       question: "L'alarme sonne-t-elle ?",
       options: ["Oui", "Non"],
       correcte: "Oui",
